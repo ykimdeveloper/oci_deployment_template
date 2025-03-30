@@ -1,0 +1,13 @@
+
+VITE_MAPBOX_ACCESS_TOKEN=pk.eyJ1Ijoic3NpZ2hlYXJ0YX#####################.#################################7_hqfa
+
+
+# GCP CLOUD RUN WITH GITHUB ACTIONS -> ADD THESE TO GITHUB SECRETS
+# Service account JSON key
+GCP_SA_KEY=your_service_account_key_here
+
+# Google Cloud project ID
+GCP_PROJECT_ID=your_gcp_project_id_here
+
+# Docker image name
+DOCKER_IMAGE_NAME=your_docker_image_name_here
