@@ -2,7 +2,6 @@ name: 'oci-fn-build'
 permissions:
   contents: read
 on:
-  # Add Trigger for push or pull request, if needed
   workflow_dispatch:
     inputs:
       OCI_FN_COMPARTMENT:
@@ -10,31 +9,39 @@ on:
         default: ocid1.compartment.oc1..aaaaaaaagpgm5kspbeahx2tnftgnvcz5l7crg3yyskdi7hexp63crnro46gq
 
 jobs:
-  # This workflow contains a single job called "build"
   Build:
-      # The type of runner that the job will run on
     runs-on: ubuntu-latest
-     # Steps represent a sequence of tasks that will be executed as part of the job
+    env:
+      OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+      OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+      OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+      OCI_FN_USER_NAME: ${{ secrets.OCI_FN_USER_NAME }}
+      OCI_CLI_AUTH_TOKEN: ${{ secrets.OCI_CLI_AUTH_TOKEN }}
+      OCI_FN_OCIR: ${{ secrets.OCI_FN_OCIR }}
+      OCI_TENANCY_NAME: ${{ secrets.OCI_TENANCY_NAME }}
+      OCI_FN_REGISTRY: ${{ secrets.OCI_FN_REGISTRY }}
+      OCI_FN_API_URL: ${{ secrets.OCI_FN_API_URL }}
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
-    # Runs a set of commands using the runners shell
+
       - name: 'Write Config & Key Files'
         run: |
           mkdir ~/.oci
           echo "[DEFAULT]" >> ~/.oci/config
-          echo "user=${{ secrets.OCI_CLI_USER }}" >> ~/.oci/config
-          echo "fingerprint=${{ secrets.OCI_CLI_FINGERPRINT }}" >> ~/.oci/config
-          echo "tenancy=${{ secrets.OCI_CLI_TENANCY }}" >> ~/.oci/config
-          echo "region=${{ secrets.OCI_CLI_REGION }}" >> ~/.oci/config         
-          echo "${{ secrets.OCI_CLI_KEY_CONTENT }}" >> ~/.oci/key.pem
+          echo "user=$OCI_CLI_USER" >> ~/.oci/config
+          echo "fingerprint=$OCI_CLI_FINGERPRINT" >> ~/.oci/config
+          echo "tenancy=$OCI_CLI_TENANCY" >> ~/.oci/config
+          echo "region=$OCI_CLI_REGION" >> ~/.oci/config         
+          echo "$OCI_CLI_KEY_CONTENT" >> ~/.oci/key.pem
           echo "key_file=~/.oci/key.pem" >> ~/.oci/config    
 
       - name: 'Install OCI CLI'
         run: |
           curl -L -O https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh
           chmod +x install.sh
-          ./install.sh --accept-all-defaults          
+          ./install.sh --accept-all-defaults
           export PATH=$PATH:/home/runner/bin
           exec -l $SHELL
 
@@ -49,15 +56,15 @@ jobs:
           curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 
       - name: 'Docker login'
-        run: docker login -u "${{ secrets.OCI_FN_USER_NAME }}" -p "${{ secrets.OCI_CLI_AUTH_TOKEN }}" "${{ secrets.OCI_FN_OCIR }}"
+        run: docker login -u "$OCI_FN_USER_NAME" -p "$OCI_CLI_AUTH_TOKEN" "$OCI_FN_OCIR"
 
       - name: 'Setting up Fn context'
         run: |
-          fn create context ${{ secrets.OCI_TENANCY_NAME }} --provider oracle
-          fn use context ${{ secrets.OCI_TENANCY_NAME }}
-          fn update context registry ${{ secrets.OCI_FN_REGISTRY }}
-          fn update context oracle.compartment-id ${{ inputs.OCI_FN_COMPARTMENT }}
-          fn update context api-url ${{ secrets.OCI_FN_API_URL }}
+          fn create context "$OCI_TENANCY_NAME" --provider oracle
+          fn use context "$OCI_TENANCY_NAME"
+          fn update context registry "$OCI_FN_REGISTRY"
+          fn update context oracle.compartment-id "${{ inputs.OCI_FN_COMPARTMENT }}"
+          fn update context api-url "$OCI_FN_API_URL"
 
       - name: 'Build Image for OCI Function'
         run: fn build --verbose
