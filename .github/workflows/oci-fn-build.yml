@@ -28,7 +28,7 @@ jobs:
 
       - name: 'Write Config & Key Files'
         run: |
-          mkdir ~/.oci
+          mkdir -p ~/.oci
           echo "[DEFAULT]" >> ~/.oci/config
           echo "user=$OCI_CLI_USER" >> ~/.oci/config
           echo "fingerprint=$OCI_CLI_FINGERPRINT" >> ~/.oci/config
@@ -43,7 +43,7 @@ jobs:
           chmod +x install.sh
           ./install.sh --accept-all-defaults
           export PATH=$PATH:/home/runner/bin
-          exec -l $SHELL
+          # Removed exec -l $SHELL to avoid environment loss
 
       - name: 'Fix Config File Permissions'
         run: |
@@ -54,6 +54,12 @@ jobs:
       - name: 'Install Fn CLI'
         run: |
           curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
+
+      - name: "Debug: Print Non-Sensitive Env Vars"
+        run: |
+          if [ -z "$OCI_FN_USER_NAME" ]; then echo "OCI_FN_USER_NAME is empty"; else echo "OCI_FN_USER_NAME is set"; fi
+          if [ -z "$OCI_CLI_AUTH_TOKEN" ]; then echo "OCI_CLI_AUTH_TOKEN is empty"; else echo "OCI_CLI_AUTH_TOKEN is set"; fi
+          if [ -z "$OCI_FN_OCIR" ]; then echo "OCI_FN_OCIR is empty"; else echo "OCI_FN_OCIR is set"; fi
 
       - name: 'Docker login'
         run: docker login -u "$OCI_FN_USER_NAME" -p "$OCI_CLI_AUTH_TOKEN" "$OCI_FN_OCIR"
