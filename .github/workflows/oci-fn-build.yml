@@ -60,8 +60,7 @@ jobs:
         run: printf "OCI_FN_USER_NAME: %s\n" "$OCI_FN_USER_NAME"
         run: printf "OCI_CLI_AUTH_TOKEN: %s\n" "$OCI_CLI_AUTH_TOKEN"
         run: printf "OCI_FN_OCIR: %s\n" "$OCI_FN_OCIR"
-
-
+        
       - name: "Debug: Print Non-Sensitive Env Vars"
         run: |
           if [ -z "$OCI_FN_USER_NAME" ]; then echo "OCI_FN_USER_NAME is empty"; else echo "OCI_FN_USER_NAME is set"; fi
