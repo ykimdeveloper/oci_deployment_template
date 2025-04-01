@@ -7,7 +7,6 @@ on:
       OCI_FN_COMPARTMENT:
         description: Function compartment
         default: ocid1.compartment.oc1..aaaaaaaagpgm5kspbeahx2tnftgnvcz5l7crg3yyskdi7hexp63crnro46gq
-
 jobs:
   Build:
     runs-on: ubuntu-latest
