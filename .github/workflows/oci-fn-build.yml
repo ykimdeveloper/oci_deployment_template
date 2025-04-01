@@ -55,12 +55,18 @@ jobs:
         run: |
           curl -LSs https://raw.githubusercontent.com/fnproject/cli/master/install | sh
 
-      - name: "Print env values"
-        run: printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" "$VITE_MAPBOX_ACCESS_TOKEN"
-        run: printf "OCI_FN_USER_NAME: %s\n" "$OCI_FN_USER_NAME"
-        run: printf "OCI_CLI_AUTH_TOKEN: %s\n" "$OCI_CLI_AUTH_TOKEN"
-        run: printf "OCI_FN_OCIR: %s\n" "$OCI_FN_OCIR"
-        
+      - name: "Print Temp Token (Not from Secrets)"
+        env:
+          TEMP_MAPBOX_ACCESS_TOKEN: "${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}"
+          OCI_FN_USER_NAME: "${{ secrets.OCI_FN_USER_NAME }}"
+          OCI_CLI_AUTH_TOKEN: "${{ secrets.OCI_CLI_AUTH_TOKEN }}"
+          OCI_FN_OCIR: "${{ secrets.OCI_FN_OCIR }}"
+        run: |
+          printf "TEMP_MAPBOX_ACCESS_TOKEN: %s\n" "$TEMP_MAPBOX_ACCESS_TOKEN"
+          printf "OCI_FN_USER_NAME: %s\n" "$OCI_FN_USER_NAME"
+          printf "OCI_CLI_AUTH_TOKEN: %s\n" "$OCI_CLI_AUTH_TOKEN"
+          printf "OCI_FN_OCIR: %s\n" "$OCI_FN_OCIR"
+
       - name: "Debug: Print Non-Sensitive Env Vars"
         run: |
           if [ -z "$OCI_FN_USER_NAME" ]; then echo "OCI_FN_USER_NAME is empty"; else echo "OCI_FN_USER_NAME is set"; fi
