@@ -75,6 +75,11 @@ jobs:
           printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" "$VITE_MAPBOX_ACCESS_TOKEN"
           
       - name: "Docker login"
+        env:
+          OCI_FN_USER_NAME: "${{ secrets.OCI_FN_USER_NAME }}"
+          OCI_CLI_AUTH_TOKEN: "${{ secrets.OCI_CLI_AUTH_TOKEN }}"
+          OCI_FN_OCIR: "${{ secrets.OCI_FN_OCIR }}"
+        run: |
         run: docker login -u "$OCI_FN_USER_NAME" -p "$OCI_CLI_AUTH_TOKEN" "$OCI_FN_OCIR"
 
       - name: "Setting up Fn context"
