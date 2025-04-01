@@ -62,10 +62,7 @@ jobs:
           if [ -z "$OCI_CLI_AUTH_TOKEN" ]; then echo "OCI_CLI_AUTH_TOKEN is empty"; else echo "OCI_CLI_AUTH_TOKEN is set"; fi
           if [ -z "$OCI_FN_OCIR" ]; then echo "OCI_FN_OCIR is empty"; else echo "OCI_FN_OCIR is set"; fi
           printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" "$VITE_MAPBOX_ACCESS_TOKEN"
-          printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" secrets.VITE_MAPBOX_ACCESS_TOKEN
-          printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" ${{secrets.VITE_MAPBOX_ACCESS_TOKEN}}
-          printf "VITE_MAPBOX_ACCESS_TOKEN: %s\n" "${{secrets.VITE_MAPBOX_ACCESS_TOKEN}}""
-
+          
       - name: "Docker login"
         run: docker login -u "$OCI_FN_USER_NAME" -p "$OCI_CLI_AUTH_TOKEN" "$OCI_FN_OCIR"
 
