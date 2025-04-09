@@ -1,163 +1,174 @@
 ## Table of Contents
 
-- [How to Get Geo Location](#-how-to-get-geo-location)
-- [GeoJSON Files](#geojson-files)
-- [How to Run the App](#how-to-run-the-app)
-  - [project files](#project-files)
-- [CI/CD Development gh-pages \& Cloud Run to Google Cloud](#cicd-development-gh-pages--cloud-run-to-google-cloud)
-  - [Deploying to GitHub Pages](#deploying-to-github-pages)
-  - [Deploying using GitHub Actions to Google Cloud](#deploying-using-github-actions-to-google-cloud)
+- [OCI To Work With IP Address (nginx)](#oci-to-work-with-ip-address-nginx)
+- [create ssl certificate  (nginx)](#create-ssl-certificate--nginx)
+- [install nginx to handle firewall traffic  (nginx)](#install-nginx-to-handle-firewall-traffic--nginx)
+- [dns from desdec and certbot ssl certificates (apache)](#dns-from-desdec-and-certbot-ssl-certificates-apache)
+- [OCI To Work With IP Address (apache)](#oci-to-work-with-ip-address-apache)
+- [dns from desdec and certbot ssl certificates (apache)](#dns-from-desdec-and-certbot-ssl-certificates-apache-1)
+- [install apache to handle firewall traffic  (nginx)](#install-apache-to-handle-firewall-traffic--nginx)
 
-## How to Get Geo Location
+## OCI To Work With IP Address (nginx)
 
-- Extract geolocation and boundary data using OpenStreetMap and Overpass Turbo.
+```Bash
+sudo apt-get update
+sudo apt-get install ufw
+sudo ufw enable
 
-  - OpenStreetMap
-    https://nominatim.openstreetmap.org/search.php?q=Beverly+Hills,+Los+Angeles,+California&polygon_geojson=1&format=json
+# for vite
+sudo ufw allow 5173/tcp
+sudo ufw status
 
-  ```Md
-  Structure:
-     q=: Specifies the search query, "Beverly Hills, Los Angeles, California."
+```
 
-     polygon_geojson=1: Requests the boundary geometry in GeoJSON format, if available.
+## create ssl certificate  (nginx)
 
-     format=json: Specifies the output format as JSON for easier parsing.
-  ```
+```Bash
+#create certificate
+sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+-keyout /etc/ssl/private/selfsigned.key \
+-out /etc/ssl/certs/selfsigned.crt \
+-subj "/C=US/ST=Arizona/L=Phoenix/O=PlotPointers/OU=IT/CN=129.146.203.245"
 
-  - Overpass Turbo
-    https://overpass-turbo.eu
+#certificate
+openssl x509 -in /etc/ssl/certs/selfsigned.crt -text -noout
 
-  ```
-        [out:json][timeout:25];
-        // Search for an area based on the state or province
-        area["name"="California"]->.state;
+sudo chmod 644 /etc/ssl/private/selfsigned.key
+#or
 
-        // Search for the city boundary within the specified state
-        (
-        relation(area.state)["boundary"="administrative"]["name"="Santa Monica"]["admin_level"="8"];
-        );
-        out geom;
-  ```
+mkdir -p /home/ubuntu/workspace/Mapbox_geojson/certs
 
-  - State/Province: area["name"="California"]->.state; scopes the search to California.
-  - City: "name"="Santa Monica" filters for Santa Monica's boundary.
-  - Admin Level: admin_level=8 targets city boundaries; adjust to admin_level=6 for counties or others.
-  - Boundary Output: out geom; retrieves full geometry of the boundaries.
-- Run query & Export results in GeoJSON format for mapping.
+sudo cp /etc/ssl/private/selfsigned.key /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.key
+sudo cp /etc/ssl/certs/selfsigned.crt /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.crt
+
+sudo chown ubuntu:ubuntu /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.key
+sudo chown ubuntu:ubuntu /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.crt
+
+chmod 644 /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.key
+chmod 644 /home/ubuntu/workspace/Mapbox_geojson/certs/selfsigned.crt
+
+```
+
+## install nginx to handle firewall traffic  (nginx)
+
+```Bash
+
+sudo apt install nginx
+
+sudo ufw allow 'Nginx Full'
+
+sudo nano /etc/nginx/sites-available/default
+nano /etc/nginx/nginx.conf
+
+# Redirect all HTTP traffic to HTTPS
+server {
+  listen 80;
+  listen [::]:80;
+  server_name 129.146.203.245;  # Replace with your public IP (or a domain if you had one)
+  return 301 https://$host$request_uri;
+}
+
+# HTTPS server block
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  server_name 129.146.203.245;  # Replace with your value
+
+  ssl_certificate /etc/ssl/certs/selfsigned.crt;
+  ssl_certificate_key /etc/ssl/private/selfsigned.key;
+
+  # Recommended SSL settings
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+
+  root /var/www/html;
+  index index.html index.htm index.nginx-debian.html;
+
+  location / {
+      # Serve static content or proxy passes if needed
+      try_files $uri $uri/ =404;
+  }
+}
+```
+
+```Bash
+sudo nano /etc/nginx/sites-available/default
+
+ps aux | grep nginx
+sudo killall nginx
+sudo systemctl start nginx
+
+```
+
+## dns from desdec and certbot ssl certificates (apache)
+
+```Bash
+# Redirect all HTTP traffic to HTTPS
+server {
+  listen 80;
+  listen [::]:80;
+  server_name blue-elephant.dedyn.io; 
+  return 301 https://$host$request_uri;
+}
+
+# HTTPS server block
+server {
+  listen 443 ssl;
+  listen [::]:443 ssl;
+  server_name blue-elephant.dedyn.io; 
+
+  ssl_certificate /etc/letsencrypt/live/blue-elephant.dedyn.io/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/blue-elephant.dedyn.io/privkey.pem;
+
+  # Recommended SSL settings
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers on;
+  ssl_ciphers HIGH:!aNULL:!MD5;
+
+  root /var/www/html;
+  index index.html index.htm index.nginx-debian.html;
+
+  location / {
+      # Serve static content or proxy passes if needed
+      try_files $uri $uri/ =404;
+  }
+}
+```
+
+```Bash
+sudo nginx -t
+sudo systemctl reload nginx
+sudo nano /etc/nginx/sites-available/default
+
+sudo certbot --nginx -d blue-elephant.dedyn.io
+
+sudo nano /etc/ddclient.conf
+
+```
+
+```Bash
+protocol=dyndns2
+use=web
+server=update.dedyn.io
+ssl=yes
+login=email@email.com
+password=passowrd234
+blue-elephant.dedyn.io
+```
+
+```Bash
+nslookup blue-elephant.dedyn.io
+sudo ddclient -daemon=0 -debug -verbose -noquiet
+```
+
+## OCI To Work With IP Address (apache)
+
+## dns from desdec and certbot ssl certificates (apache)
+
+## install apache to handle firewall traffic  (nginx)
 
 Santa Monica boundaries goes into the ocean
 https://www.openstreetmap.org/relation/3353288
 
 ![Santa Monica booundary at openstreetmap](./assets/screenshot3.png)
-
-ArcGis has 3 boundaries at Santa Monica
-https://www.arcgis.com/apps/mapviewer/index.html?layers=78251bbda6214e348cb9cf304bbcac98
-https://gisdata.santamonica.gov/maps/78251bbda6214e348cb9cf304bbcac98/about
-
-![ArcGis has 3 boundaries for Santa Monica](./assets/screenshot4.png)
-
-## GeoJSON Files
-
-You can find the GeoJSON files in the [public/data_geojson directory](https://github.com/ykimdeveloper/Mapbox_geojson/tree/main/public/data_geojson).
-
-- [X] Incorporated Cities:
-  - [X] West Hollywood
-  - [X] Beverly Hills
-  - [X] Culver City
-  - [X] Santa Monica
-  - [X] Universal City
-  - [X] San Fernando
-  - [X] Inglewood
-- [ ] Unincorporated
-  - [X] Marina Del Ray
-  - [ ] Unincorporated LA Southwest of Culver City (this includes View Park-Windsor Hills, Ladera Heights, and oil fields)
-  - [ ] Federal Land (VA Campus)
-  - [X] Franklin Canyon (weird square above Beverly Hills)
-
-## How to Run the App
-
-```bash
- npm run dev
- 
-  VITE v6.2.2  ready in 577 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: http://192.168.4.145:5173/
-  ➜  press h + enter to show help
-```
-
-![Screenshot of the App](./assets/screenshot.png)
-
-![Screenshot with arcgis block2 boundary  ](./assets/screenshot2.png)
-
-* maybe clean up the bounaries in santa monica?
-
-App.js Main component that displays the map, sidebar with coordinates, and a reset button. It uses the custom hook to initialize and control the Mapbox map.
-
-src/hooks/useMapbox.js Custom hook that creates and manages the Mapbox map instance, updates state on movement, and loads GeoJSON county layers on map load.
-
-src/utils/countySources.js Utility that exports addCountyLayer, a function to fetch local GeoJSON, optionally wrap it as a Feature, and add it to the map with neon styling.
-
-### project files
-
-```Md
-project-root/
-  ├─ public/
-  │   └─ data_geojson/
-  │       ├─ bev_hills/
-  │       │   └─ bev_hills_openstreetmap.geojson
-  │       └─ culver_city/
-  │           └─ culver_city_openstreetmap.geojson
-  └─ src/
-      ├─ hooks/
-      │   └─ useMapbox.js
-      └─ utils/
-          └─ countySources.js
-```
-
-## CI/CD Development gh-pages & Cloud Run to Google Cloud
-
-### Deploying to GitHub Pages
-
-1. Update Vite Config: Change the base in vite.config.js to match your repo name
-
-```Md
-// For GitHub Pages, if your repository is named "Mapbox_geojson":
-export default defineConfig({
-  base: '/Mapbox_geojson/',
-  plugins: [react()],
-})
-
-```
-
-2. Production Build: Run npm run build to generate static files in the dist/ folder.
-3. Deploy to GitHub Pages
-
-   ```
-   npm run build
-   npm install --save-dev gh-pages
-   ```
-
-   package.json:
-
-   ```
-        "scripts": {
-        "build": "vite build",
-        "deploy": "gh-pages -d dist"
-      }
-   ```
-4. Your app will then be available at https://<username>.github.io/my-app/
-
-   ```npm run build
-      npm run deploy
-   ```
-
-   ![Screenshot path for gh-pages  ](./assets/screenshot4a.png)
-5. Add secrets
-   ![Screenshot path for add secrets  ](./assets/screenshot5.png)
-
-### Deploying using GitHub Actions to Google Cloud
-
-![Screenshot path for gh-pages  ](./assets/screenshot6.png)
-
-![Screenshot for successful cloud run with gh actions  ](./assets/screenshot7.png)
