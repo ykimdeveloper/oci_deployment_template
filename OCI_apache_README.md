@@ -6,9 +6,6 @@
 - [create ssl certificate  (nginx)](#create-ssl-certificate--nginx)
 - [install nginx to handle firewall traffic  (nginx)](#install-nginx-to-handle-firewall-traffic--nginx)
 - [dns from desdec and certbot ssl certificates (apache)](#dns-from-desdec-and-certbot-ssl-certificates-apache)
-- [OCI To Work With IP Address (apache)](#oci-to-work-with-ip-address-apache)
-- [dns from desdec and certbot ssl certificates (apache)](#dns-from-desdec-and-certbot-ssl-certificates-apache-1)
-- [install apache to handle firewall traffic  (apache)](#install-apache-to-handle-firewall-traffic--apache)
 
 ## OCI To Work With IP Address (nginx)
 
@@ -349,14 +346,3 @@ To verify the cron job has been added
 ```Bash
 crontab -l
 ```
-
-## OCI To Work With IP Address (apache)
-
-## dns from desdec and certbot ssl certificates (apache)
-
-## install apache to handle firewall traffic  (apache)
-
-Santa Monica boundaries goes into the ocean
-https://www.openstreetmap.org/relation/3353288
-
-![Santa Monica booundary at openstreetmap](./assets/screenshot3.png)
